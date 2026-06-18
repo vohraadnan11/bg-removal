@@ -342,28 +342,40 @@
 </footer>
 
 <script type="module">
+  // Use publicPath to load WASM/model files from CDN — avoids needing COOP/COEP headers on GitHub Pages
   import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/browser.mjs';
 
-  const dropZone    = document.getElementById('drop-zone');
-  const fileInput   = document.getElementById('file-input');
-  const progressWrap = document.getElementById('progress-wrap');
-  const progressLabel = document.getElementById('progress-label');
-  const progressFill  = document.getElementById('progress-bar-fill');
-  const resultWrap  = document.getElementById('result-wrap');
-  const originalImg = document.getElementById('original-img');
-  const resultImg   = document.getElementById('result-img');
-  const downloadBtn = document.getElementById('download-btn');
-  const newBtn      = document.getElementById('new-btn');
+  const CDN = 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/';
 
-  // Open file picker
-  dropZone.addEventListener('click', () => fileInput.click());
+  const dropZone     = document.getElementById('drop-zone');
+  const fileInput    = document.getElementById('file-input');
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressLabel= document.getElementById('progress-label');
+  const progressFill = document.getElementById('progress-bar-fill');
+  const resultWrap   = document.getElementById('result-wrap');
+  const originalImg  = document.getElementById('original-img');
+  const resultImg    = document.getElementById('result-img');
+  const downloadBtn  = document.getElementById('download-btn');
+  const newBtn       = document.getElementById('new-btn');
+
+  // Prevent browser from navigating to dropped files at the window level
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => e.preventDefault());
+
+  // Open file picker on click
+  dropZone.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput.click();
+  });
   dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
 
-  // Drag & drop
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  // Drag & drop on the zone
+  dropZone.addEventListener('dragenter', e => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', e => { e.stopPropagation(); dropZone.classList.remove('dragover'); });
   dropZone.addEventListener('drop', e => {
     e.preventDefault();
+    e.stopPropagation();
     dropZone.classList.remove('dragover');
     const file = e.dataTransfer.files[0];
     if (file) processFile(file);
@@ -389,32 +401,30 @@
       return;
     }
 
-    // Show original
-    const originalUrl = URL.createObjectURL(file);
-    originalImg.src = originalUrl;
+    // Show original preview
+    originalImg.src = URL.createObjectURL(file);
 
     // Hide drop zone, show progress
     dropZone.style.display = 'none';
     resultWrap.classList.remove('visible');
     progressWrap.classList.add('visible');
-    progressFill.style.width = '0%';
+    progressFill.style.width = '5%';
     progressLabel.textContent = 'Loading AI model…';
 
     try {
       const blob = await removeBackground(file, {
+        publicPath: CDN,   // ← key fix: load WASM + model from CDN, no local server headers needed
         progress: (key, current, total) => {
           const pct = total > 0 ? Math.round((current / total) * 100) : 0;
-          progressFill.style.width = pct + '%';
-          if (key === 'compute:inference') {
-            progressLabel.textContent = `Removing background… ${pct}%`;
-          } else {
-            progressLabel.textContent = `Loading AI model… ${pct}%`;
-          }
+          progressFill.style.width = Math.max(pct, 5) + '%';
+          progressLabel.textContent = key === 'compute:inference'
+            ? `Removing background… ${pct}%`
+            : `Loading AI model… ${pct}%`;
         }
       });
 
       const resultUrl = URL.createObjectURL(blob);
-      resultImg.src = resultUrl;
+      resultImg.src   = resultUrl;
       downloadBtn.href = resultUrl;
 
       progressWrap.classList.remove('visible');
@@ -424,7 +434,7 @@
       console.error(err);
       progressWrap.classList.remove('visible');
       dropZone.style.display = '';
-      alert('Something went wrong removing the background. Try a different image or refresh the page.');
+      alert('Could not remove background. Try a different image or check the browser console for details.');
     }
   }
 </script>
