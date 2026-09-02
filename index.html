@@ -1,457 +1,589 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BG Remove — Free Background Removal</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matte — background removal</title>
+<meta name="description" content="Remove backgrounds from photos entirely in your browser. No uploads, no server, no API key.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141310;
+    --surface:#1c1a15;
+    --surface-2:#232019;
+    --border:#3a352b;
+    --border-soft:#2a271f;
+    --text:#f1ede3;
+    --text-muted:#9c957f;
+    --accent:#c6ff5e;
+    --accent-dim:#8fbf3d;
+    --rust:#e2793d;
+    --check-a:#211f18;
+    --check-b:#2b281f;
+  }
 
-    :root {
-      --bg: #f9f9f7;
-      --surface: #ffffff;
-      --border: #e4e4e0;
-      --text: #1a1a18;
-      --muted: #888884;
-      --accent: #2d2d2a;
-      --accent-light: #f0f0ec;
-      --radius: 12px;
-    }
+  *{ box-sizing:border-box; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', system-ui, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
 
-    header {
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
 
-    .logo {
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      color: var(--text);
-    }
-    .logo span { color: var(--muted); font-weight: 400; }
+  a{ color:inherit; }
 
-    .badge {
-      font-size: 11px;
-      font-weight: 500;
-      background: var(--accent-light);
-      color: var(--accent);
-      padding: 4px 10px;
-      border-radius: 20px;
-    }
+  ::selection{ background:var(--accent); color:#141310; }
 
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 56px 24px 80px;
-      gap: 40px;
-    }
+  :focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:3px;
+  }
 
-    .hero { text-align: center; max-width: 480px; }
-    .hero h1 {
-      font-size: clamp(26px, 5vw, 40px);
-      font-weight: 700;
-      letter-spacing: -0.8px;
-      line-height: 1.15;
-      margin-bottom: 12px;
-    }
-    .hero p { font-size: 15px; color: var(--muted); line-height: 1.6; }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 24px 96px;
+  }
 
-    /* ── Drop Zone ── */
-    #drop-zone {
-      width: 100%;
-      max-width: 540px;
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      padding: 52px 32px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      user-select: none;
-    }
-    #drop-zone.dragover {
-      border-color: var(--accent);
-      background: var(--accent-light);
-    }
+  /* ---------- top bar ---------- */
+  .topbar{
+    max-width:920px;
+    margin:0 auto;
+    padding:28px 24px 0;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .wordmark{
+    font-size:14px;
+    letter-spacing:0.02em;
+    font-weight:500;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .wordmark .dot{
+    width:8px; height:8px;
+    background:var(--accent);
+    display:inline-block;
+    flex:none;
+  }
+  .topbar .note{
+    font-size:12px;
+    color:var(--text-muted);
+    text-align:right;
+  }
 
-    .drop-icon {
-      width: 52px; height: 52px;
-      border-radius: 50%;
-      background: var(--accent-light);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .drop-icon svg { width: 24px; height: 24px; stroke: var(--accent); }
+  /* ---------- hero ---------- */
+  .hero{
+    padding:56px 0 36px;
+  }
+  h1{
+    font-size:clamp(32px, 5.2vw, 52px);
+    line-height:1.05;
+    font-weight:600;
+    margin:0 0 14px;
+    max-width:14ch;
+    letter-spacing:-0.01em;
+  }
+  .hero p{
+    font-size:16px;
+    line-height:1.55;
+    color:var(--text-muted);
+    max-width:52ch;
+    margin:0;
+  }
 
-    #drop-zone .label { font-size: 15px; font-weight: 500; color: var(--text); }
-    #drop-zone .sublabel { font-size: 13px; color: var(--muted); }
+  /* ---------- drop zone ---------- */
+  .dropzone{
+    margin-top:36px;
+    position:relative;
+    border:1.5px dashed var(--border);
+    background-image:
+      linear-gradient(45deg, var(--check-b) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--check-b) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--check-b) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--check-b) 75%);
+    background-size:22px 22px;
+    background-position:0 0, 0 11px, 11px -11px, -11px 0px;
+    background-color:var(--check-a);
+    min-height:260px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    cursor:pointer;
+    padding:32px;
+    transition:border-color .15s ease, background-color .15s ease;
+  }
+  .dropzone:hover{ border-color:var(--text-muted); }
+  .dropzone.drag{
+    border-color:var(--accent);
+    border-style:solid;
+  }
+  .dropzone .inner{
+    position:relative;
+    z-index:1;
+  }
+  .dz-icon{
+    width:40px; height:40px;
+    margin:0 auto 18px;
+    display:block;
+  }
+  .dz-title{
+    font-size:17px;
+    font-weight:500;
+    margin:0 0 6px;
+  }
+  .dz-sub{
+    font-size:13px;
+    color:var(--text-muted);
+    margin:0;
+  }
+  .dz-sub .browse{
+    color:var(--accent);
+    text-decoration:underline;
+    text-underline-offset:3px;
+  }
+  .dropzone input[type=file]{
+    position:absolute;
+    inset:0;
+    opacity:0;
+    cursor:pointer;
+    width:100%;
+    height:100%;
+  }
 
-    .btn-upload {
-      margin-top: 4px;
-      padding: 10px 22px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    .btn-upload:hover { opacity: 0.82; }
+  /* ---------- status line ---------- */
+  .status{
+    margin-top:18px;
+    min-height:20px;
+    font-size:12.5px;
+    color:var(--text-muted);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .status .bar{
+    width:120px;
+    height:3px;
+    background:var(--border-soft);
+    position:relative;
+    overflow:hidden;
+    flex:none;
+  }
+  .status .bar i{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0%;
+    background:var(--accent);
+    transition:width .2s ease;
+  }
+  .status.hidden{ visibility:hidden; }
 
-    #file-input { display: none; }
+  /* ---------- results ---------- */
+  .results{
+    margin-top:44px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:22px;
+  }
+  .card{
+    border:1px solid var(--border-soft);
+    background:var(--surface);
+  }
+  .frame{
+    position:relative;
+    aspect-ratio:1 / 1;
+    overflow:hidden;
+    background-image:
+      linear-gradient(45deg, var(--check-b) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--check-b) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--check-b) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--check-b) 75%);
+    background-size:18px 18px;
+    background-position:0 0, 0 9px, 9px -9px, -9px 0px;
+    background-color:var(--check-a);
+  }
+  .frame img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    -webkit-user-select:none;
+    user-select:none;
+    pointer-events:none;
+  }
+  .frame .after{
+    clip-path:inset(0 0 0 50%);
+  }
+  .frame .handle-line{
+    position:absolute;
+    top:0; bottom:0;
+    left:50%;
+    width:1px;
+    background:var(--text);
+    opacity:.8;
+    pointer-events:none;
+  }
+  .frame .handle-grip{
+    position:absolute;
+    top:50%; left:50%;
+    width:26px; height:26px;
+    transform:translate(-50%,-50%);
+    background:var(--text);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+  }
+  .frame .handle-grip svg{ width:13px; height:13px; }
+  .frame .slider-input{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    margin:0;
+    opacity:0;
+    cursor:ew-resize;
+    -webkit-appearance:none;
+    appearance:none;
+    background:transparent;
+  }
+  .frame .tag{
+    position:absolute;
+    bottom:8px;
+    font-size:10px;
+    letter-spacing:.04em;
+    padding:3px 6px;
+    background:rgba(20,19,16,.72);
+    color:var(--text-muted);
+    pointer-events:none;
+  }
+  .frame .tag.before{ left:8px; }
+  .frame .tag.after{ right:8px; }
 
-    /* ── Status ── */
-    #status-wrap {
-      display: none;
-      width: 100%;
-      max-width: 540px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px 24px;
-      flex-direction: column;
-      gap: 14px;
-      align-items: center;
-    }
-    #status-wrap.visible { display: flex; }
+  .frame .center-msg{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:10px;
+    background:rgba(20,19,16,.55);
+    font-size:12.5px;
+    color:var(--text-muted);
+    text-align:center;
+    padding:20px;
+  }
+  .spin{
+    width:20px; height:20px;
+    border:2px solid var(--border);
+    border-top-color:var(--accent);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
 
-    #status-label {
-      font-size: 14px;
-      color: var(--muted);
-      text-align: center;
-    }
+  .card .meta{
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .card .fname{
+    font-size:12px;
+    color:var(--text-muted);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .card .actions{
+    display:flex;
+    gap:8px;
+    flex:none;
+  }
+  .btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:.02em;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+    padding:7px 10px;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .btn:hover{ border-color:var(--text-muted); }
+  .btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#141310;
+    font-weight:500;
+  }
+  .btn.primary:hover{ background:#d4ff82; }
+  .btn.ghost{ color:var(--text-muted); }
+  .btn.ghost:hover{ color:var(--rust); border-color:var(--rust); }
+  .btn[disabled]{ opacity:.4; cursor:default; pointer-events:none; }
 
-    .progress-track {
-      width: 100%;
-      height: 4px;
-      background: var(--border);
-      border-radius: 99px;
-      overflow: hidden;
-    }
-    #progress-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--accent);
-      border-radius: 99px;
-      transition: width 0.4s ease;
-    }
+  .error-msg{ color:var(--rust); }
 
-    /* ── Result ── */
-    #result-wrap {
-      display: none;
-      width: 100%;
-      max-width: 680px;
-      flex-direction: column;
-      gap: 20px;
-    }
-    #result-wrap.visible { display: flex; }
+  /* ---------- footer ---------- */
+  footer{
+    margin-top:64px;
+    padding-top:20px;
+    border-top:1px solid var(--border-soft);
+    font-size:12px;
+    color:var(--text-muted);
+    line-height:1.6;
+  }
+  footer a{ color:var(--text-muted); text-decoration:underline; text-underline-offset:3px; }
+  footer a:hover{ color:var(--text); }
 
-    .result-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 500px) { .result-grid { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce){
+    .spin{ animation:none; }
+    *{ transition:none !important; }
+  }
 
-    .img-card {
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .img-card-label {
-      padding: 9px 14px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      color: var(--muted);
-      border-bottom: 1px solid var(--border);
-    }
-    .img-card img {
-      width: 100%;
-      display: block;
-      object-fit: contain;
-      max-height: 280px;
-    }
-    .checker {
-      background-image:
-        linear-gradient(45deg, #ddd 25%, transparent 25%),
-        linear-gradient(-45deg, #ddd 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #ddd 75%),
-        linear-gradient(-45deg, transparent 75%, #ddd 75%);
-      background-size: 14px 14px;
-      background-position: 0 0, 0 7px, 7px -7px, -7px 0;
-      background-color: #f0f0ee;
-    }
-
-    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
-
-    .btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 10px 20px; border-radius: 8px;
-      font-size: 14px; font-weight: 500;
-      cursor: pointer; border: none;
-      transition: opacity 0.15s;
-    }
-    .btn:hover { opacity: 0.82; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-outline {
-      background: transparent;
-      border: 1.5px solid var(--border);
-      color: var(--text);
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 12px;
-      color: var(--muted);
-      border-top: 1px solid var(--border);
-    }
-    footer a { color: var(--muted); }
-  </style>
+  @media (max-width:520px){
+    .topbar{ flex-direction:column; align-items:flex-start; gap:4px; }
+    .topbar .note{ text-align:left; }
+  }
+</style>
 </head>
 <body>
 
-<header>
-  <div class="logo">BG<span>Remove</span></div>
-  <span class="badge">Unlimited · 100% Browser · No Upload</span>
-</header>
+<div class="topbar">
+  <span class="wordmark mono"><span class="dot"></span>MATTE</span>
+  <span class="note mono">runs on this device — nothing is uploaded</span>
+</div>
 
-<main>
+<div class="wrap">
+
   <div class="hero">
-    <h1>Remove backgrounds<br>instantly & free</h1>
-    <p>AI-powered, runs entirely in your browser. No sign-up, no limits, no data sent anywhere.</p>
-  </div>
+    <h1>Cut the background out. Keep everything else.</h1>
+    <p>Drop in a photo and Matte lifts the subject out — hair, glass, fine edges included — using a segmentation model that runs locally in your browser. No server, no account, no image ever leaves this tab.</p>
 
-  <!-- Upload Zone -->
-  <div id="drop-zone">
-    <div class="drop-icon">
-      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
-      </svg>
-    </div>
-    <div class="label">Drop your image here</div>
-    <div class="sublabel">PNG, JPG, WebP — any size</div>
-    <button class="btn-upload" id="upload-btn">Choose File</button>
-    <input type="file" id="file-input" accept="image/*" />
-  </div>
-
-  <!-- Status / Progress -->
-  <div id="status-wrap">
-    <div id="status-label">Starting…</div>
-    <div class="progress-track">
-      <div id="progress-fill"></div>
-    </div>
-  </div>
-
-  <!-- Result -->
-  <div id="result-wrap">
-    <div class="result-grid">
-      <div class="img-card">
-        <div class="img-card-label">Original</div>
-        <img id="original-img" alt="Original" />
-      </div>
-      <div class="img-card checker">
-        <div class="img-card-label">Background Removed</div>
-        <img id="result-img" alt="Result" />
-      </div>
-    </div>
-    <div class="actions">
-      <a id="download-btn" class="btn btn-primary" download="no-bg.png">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+    <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload photos to remove their background">
+      <div class="inner">
+        <svg class="dz-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 5V25M20 5L13 12M20 5L27 12" stroke="#c6ff5e" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/>
+          <path d="M6 25V31C6 32.6569 7.34315 34 9 34H31C32.6569 34 34 32.6569 34 31V25" stroke="#9c957f" stroke-width="2" stroke-linecap="square"/>
         </svg>
-        Download JPG
-      </a>
-      <button id="new-btn" class="btn btn-outline">Try another image</button>
+        <p class="dz-title">Drag photos here</p>
+        <p class="dz-sub mono">or <span class="browse">browse files</span> — JPG, PNG, WebP</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp" multiple aria-hidden="true">
+    </div>
+
+    <div class="status mono hidden" id="status" aria-live="polite">
+      <span id="statusText">Loading model…</span>
+      <span class="bar"><i id="statusBar"></i></span>
     </div>
   </div>
-</main>
 
-<footer>
-  Powered by <a href="https://huggingface.co/briaai/RMBG-1.4" target="_blank">RMBG-1.4</a> via
-  <a href="https://github.com/xenova/transformers.js" target="_blank">Transformers.js</a> ·
-  Your images never leave your device
-</footer>
+  <div class="results" id="results"></div>
+
+  <footer>
+    Background removal runs entirely in-browser via a local ONNX segmentation model (<a href="https://github.com/imgly/background-removal-js" target="_blank" rel="noopener">@imgly/background-removal</a>). The first photo you process triggers a one-time model download (roughly 40&ndash;80&nbsp;MB depending on your connection); every photo after that is processed instantly and offline. Large or highly detailed photos take a little longer. This page needs to be served over http/https (e.g. GitHub Pages) — opening it directly as a local file will block the model download.
+  </footer>
+
+</div>
 
 <script type="module">
-  import { AutoModel, AutoProcessor, env, RawImage } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.min.js';
+  import { removeBackground } from "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/browser.mjs";
 
-  // Use hosted Hugging Face models — no local files needed
-  env.allowLocalModels = false;
+  const dropzone   = document.getElementById('dropzone');
+  const fileInput  = document.getElementById('fileInput');
+  const resultsEl  = document.getElementById('results');
+  const statusEl   = document.getElementById('status');
+  const statusText = document.getElementById('statusText');
+  const statusBar  = document.getElementById('statusBar');
 
-  const dropZone    = document.getElementById('drop-zone');
-  const uploadBtn   = document.getElementById('upload-btn');
-  const fileInput   = document.getElementById('file-input');
-  const statusWrap  = document.getElementById('status-wrap');
-  const statusLabel = document.getElementById('status-label');
-  const progressFill= document.getElementById('progress-fill');
-  const resultWrap  = document.getElementById('result-wrap');
-  const originalImg = document.getElementById('original-img');
-  const resultImg   = document.getElementById('result-img');
-  const downloadBtn = document.getElementById('download-btn');
-  const newBtn      = document.getElementById('new-btn');
+  let queueActive = false;
+  let itemId = 0;
 
-  // Block browser default for drag-drop everywhere on the page
-  document.addEventListener('dragover', e => e.preventDefault());
-  document.addEventListener('drop',     e => e.preventDefault());
-
-  // Click upload button (not the whole drop zone, to avoid conflicts)
-  uploadBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    fileInput.click();
+  // ---- drop zone interactions ----
+  dropzone.addEventListener('click', (e) => {
+    if (e.target !== fileInput) fileInput.click();
   });
-
-  // Drag & drop on the zone
-  dropZone.addEventListener('dragenter', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-  dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('dragover'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) processFile(file);
+  dropzone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
   });
-
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) processFile(fileInput.files[0]);
+  ['dragenter','dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); })
+  );
+  ['dragleave','drop'].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); })
+  );
+  dropzone.addEventListener('drop', (e) => {
+    if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
   });
-
-  newBtn.addEventListener('click', () => {
-    resultWrap.classList.remove('visible');
-    dropZone.style.display = '';
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files?.length) handleFiles(e.target.files);
     fileInput.value = '';
   });
 
-  // ── Model (loaded once, cached) ──
-  let model = null, processor = null;
-  const MODEL_ID = 'briaai/RMBG-1.4';
+  function handleFiles(fileList) {
+    const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+    files.forEach(queueFile);
+  }
 
   function setStatus(text, pct) {
-    statusLabel.textContent = text;
-    if (pct !== undefined) progressFill.style.width = pct + '%';
+    statusEl.classList.remove('hidden');
+    statusText.textContent = text;
+    statusBar.style.width = (pct == null ? 0 : Math.round(pct * 100)) + '%';
+  }
+  function clearStatus() {
+    statusEl.classList.add('hidden');
   }
 
-  async function loadModel() {
-    if (model && processor) return;
-    setStatus('Downloading AI model (first time ~80MB, then cached)…', 10);
-    processor = await AutoProcessor.from_pretrained(MODEL_ID, {
-      progress_callback: (p) => {
-        if (p.status === 'progress' && p.total) {
-          const pct = Math.round((p.loaded / p.total) * 60) + 10;
-          setStatus(`Downloading model… ${Math.round(p.loaded/1024/1024)}MB / ${Math.round(p.total/1024/1024)}MB`, pct);
-        }
-      }
-    });
-    setStatus('Loading model into memory…', 75);
-    model = await AutoModel.from_pretrained(MODEL_ID, {
-      config: { model_type: 'custom' },
-      progress_callback: (p) => {
-        if (p.status === 'progress' && p.total) {
-          const pct = Math.round((p.loaded / p.total) * 20) + 75;
-          setStatus('Loading model…', pct);
-        }
-      }
-    });
-    setStatus('Ready!', 100);
+  function queueFile(file) {
+    const id = 'item-' + (itemId++);
+    const originalUrl = URL.createObjectURL(file);
+
+    const card = buildCard(id, file.name, originalUrl);
+    resultsEl.prepend(card);
+
+    processFile(id, file, originalUrl);
   }
 
-  async function processFile(file) {
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file (PNG, JPG, WebP).');
-      return;
-    }
+  function buildCard(id, name, originalUrl) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = id;
+    card.innerHTML = `
+      <div class="frame">
+        <img class="before" src="${originalUrl}" alt="Original photo">
+        <div class="center-msg">
+          <div class="spin"></div>
+          <span>Removing background…</span>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="fname mono" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
+        <div class="actions">
+          <button class="btn ghost" data-action="remove">Remove</button>
+        </div>
+      </div>
+    `;
+    card.querySelector('[data-action="remove"]').addEventListener('click', () => {
+      const before = card.querySelector('img.before')?.src;
+      const after = card.querySelector('img.after')?.src;
+      if (before) URL.revokeObjectURL(before);
+      if (after) URL.revokeObjectURL(after);
+      card.remove();
+    });
+    return card;
+  }
 
-    // Show original
-    originalImg.src = URL.createObjectURL(file);
-
-    // Switch to status view
-    dropZone.style.display = 'none';
-    resultWrap.classList.remove('visible');
-    statusWrap.classList.add('visible');
-    progressFill.style.width = '5%';
+  async function processFile(id, file, originalUrl) {
+    const card = document.getElementById(id);
+    if (!card) return;
 
     try {
-      await loadModel();
+      const resultBlob = await removeBackground(file, {
+        progress: (key, current, total) => {
+          if (total > 0) {
+            setStatus('Preparing on-device model — first photo only', current / total);
+          }
+        }
+      });
+      clearStatus();
 
-      setStatus('Processing image…', 90);
-
-      // Load image via RawImage
-      const imageUrl = URL.createObjectURL(file);
-      const image = await RawImage.fromURL(imageUrl);
-
-      // Run segmentation
-      const { pixel_values } = await processor(image);
-      const { output } = await model({ input: pixel_values });
-
-      // Convert mask to canvas
-      const mask = await RawImage.fromTensor(output[0].mul(255).to('uint8')).resize(image.width, image.height);
-
-      const canvas = document.createElement('canvas');
-      canvas.width  = image.width;
-      canvas.height = image.height;
-      const ctx = canvas.getContext('2d');
-
-      // Draw original image
-      ctx.drawImage(await imageToHTMLImage(imageUrl), 0, 0);
-
-      // Apply mask as alpha
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const maskData = mask.data;
-      for (let i = 0; i < maskData.length; i++) {
-        imgData.data[i * 4 + 3] = maskData[i];
-      }
-      ctx.putImageData(imgData, 0, 0);
-
-      // Output
-      canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        resultImg.src     = url;
-        downloadBtn.href  = url;
-        downloadBtn.download = 'no-bg.jpg';
-        setStatus('Done!', 100);
-        statusWrap.classList.remove('visible');
-        resultWrap.classList.add('visible');
-      }, 'image/jpeg', 0.95);
-
+      const resultUrl = URL.createObjectURL(resultBlob);
+      renderResult(card, file.name, originalUrl, resultUrl);
     } catch (err) {
       console.error(err);
-      statusWrap.classList.remove('visible');
-      dropZone.style.display = '';
-      alert('Error: ' + (err.message || 'Something went wrong. Check the browser console for details.'));
+      clearStatus();
+      renderError(card, err);
     }
   }
 
-  function imageToHTMLImage(url) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload  = () => resolve(img);
-      img.onerror = reject;
-      img.src = url;
+  function renderResult(card, name, originalUrl, resultUrl) {
+    const frame = card.querySelector('.frame');
+    frame.innerHTML = `
+      <img class="before" src="${originalUrl}" alt="Original photo">
+      <img class="after" src="${resultUrl}" alt="Photo with background removed">
+      <div class="handle-line"></div>
+      <div class="handle-grip">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M5 4L2 8L5 12M11 4L14 8L11 12" stroke="#141310" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <input type="range" class="slider-input" min="0" max="100" value="50" aria-label="Drag to compare original and result">
+      <span class="tag before mono">before</span>
+      <span class="tag after mono">after</span>
+    `;
+    const range = frame.querySelector('.slider-input');
+    const after = frame.querySelector('.after');
+    const line = frame.querySelector('.handle-line');
+    const grip = frame.querySelector('.handle-grip');
+    range.addEventListener('input', () => {
+      const v = range.value;
+      after.style.clipPath = `inset(0 0 0 ${v}%)`;
+      line.style.left = v + '%';
+      grip.style.left = v + '%';
     });
+
+    const actions = card.querySelector('.actions');
+    actions.innerHTML = `
+      <a class="btn primary" data-action="download" download="${downloadName(name)}">Download PNG</a>
+      <button class="btn ghost" data-action="remove">Remove</button>
+    `;
+    actions.querySelector('[data-action="download"]').href = resultUrl;
+    actions.querySelector('[data-action="remove"]').addEventListener('click', () => {
+      URL.revokeObjectURL(originalUrl);
+      URL.revokeObjectURL(resultUrl);
+      card.remove();
+    });
+  }
+
+  function renderError(card, err) {
+    const frame = card.querySelector('.frame');
+    const msg = frame.querySelector('.center-msg');
+    if (msg) {
+      msg.innerHTML = `<span class="error-msg mono">Could not process this photo.</span><span class="mono" style="font-size:11px;">${escapeHtml(err?.message || 'Unknown error')}</span>`;
+    }
+    const actions = card.querySelector('.actions');
+    actions.innerHTML = `
+      <button class="btn" data-action="retry">Retry</button>
+      <button class="btn ghost" data-action="remove">Remove</button>
+    `;
+    actions.querySelector('[data-action="remove"]').addEventListener('click', () => card.remove());
+    actions.querySelector('[data-action="retry"]').addEventListener('click', async () => {
+      const originalUrl = card.querySelector('img.before').src;
+      const res = await fetch(originalUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'photo.png', { type: blob.type || 'image/png' });
+      frame.innerHTML = `
+        <img class="before" src="${originalUrl}" alt="Original photo">
+        <div class="center-msg"><div class="spin"></div><span>Removing background…</span></div>
+      `;
+      processFile(card.id, file, originalUrl);
+    });
+  }
+
+  function downloadName(originalName) {
+    const base = originalName.replace(/\.[^/.]+$/, '');
+    return (base || 'photo') + '-cutout.png';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 </script>
 </body>
